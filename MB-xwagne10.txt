@@ -1,0 +1,47 @@
+#### Stručně odpovězte na následující otázky: ######
+
+1. Proč je nutné určovat, zda má výpočet pokračovat?
+==============================================================================
+Je to důležité pro účely další optimalizace.
+Bez tohoto ukončovaní může docházet ke zbytečným výpočtům stavů,
+které zřejmě nekonvergují (abs|z| větší než 2).
+Takovýchto stavů by bylo zřejmě mnoho už jen z toho důvodu,
+že velký počet bodů v určených rozmezích grafu na takovýchto souřadnicích začíná.
+
+
+2. Byla "Line" vektorizace efektivní? Proč?
+==============================================================================
+V rámci možností ji považuji za efektivní, i když méně, než dávku.
+Také ji považuji, za lehce čitelnější, protože dávka musí dokončit nedělitelný zbytek pole.
+Proč je "Line" méně efektivní než "Batch" je zřejmě z důvodu častějších "cache miss".
+Její zvýšená efektivita oproti referenčnímu řešení je způsobena velkou mírou vektorizace,
+i když trpí větším "cache miss" také než referenční řešení.
+
+
+3. Jaká byla dosažena výkonnost v Intel Advisoru pro jednotlivé implementace 
+(v GFLOPS)?
+==============================================================================
+"Line"  = 27.47 GFLOPS v celém programu a 32.57 GFLOPS ve vektorizované smyčce.
+"Batch" = 16.91 GFLOPS v celém programu a 47.75 GFLOPS ve vektorizované smyčce.
+
+
+4. Jaká část kódu byla paralizována v "Line" implementaci? Vyčteme tuto 
+informaci i u batch kalkulátoru?
+==============================================================================
+Jedna z paralizovaných částí kódu je zcela určitě detekce ukončení,
+která takto musí detekovat ukončení v celém řádku,
+k této paralizaci dochází i u dávek, ale v menším množství.
+
+Další paralizace je prohození cyklů, které zhoršuje čitelnost a přístupy do paměti.
+Tato nečitelnost již není tak poznat v "batch" implementaci,
+která se ke grafu chová jako k jednorozměrnému poli místo pole dvourozměrného.
+
+
+5. Co vyčteme z Roofline modelu pro obě vektorizované implementace?
+==============================================================================
+Obě implementace se nachází někde mezi teoretickým maximem L2 a L3 cache.
+Z tohoto lze usoudit, že program využívá zejména L1 a L2 cachí,
+ale došlo k výpadku některé vyšší cache.
+Vzhledem k velikosti dat považuji tento výsledek za uspokojivý.
+
+

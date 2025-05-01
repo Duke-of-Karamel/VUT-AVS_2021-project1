@@ -1,0 +1,20 @@
+======================== Mandelbrot SIMD calculator ==========================
+Calculator:        RefMandelCalculator
+Base size:         2048
+Matrix size:       6144x4096
+Iteration limit:   100
+Elapsed Time:      1862 ms
+[dd-21-22-199@cn28.barbora build]$ ./mandelbrot -c line
+======================== Mandelbrot SIMD calculator ==========================
+Calculator:        LineMandelCalculator
+Base size:         2048
+Matrix size:       6144x4096
+Iteration limit:   100
+Elapsed Time:      744 ms
+[dd-21-22-199@cn28.barbora build]$ ./mandelbrot -c batch
+======================== Mandelbrot SIMD calculator ==========================
+Calculator:        BatchMandelCalculator
+Base size:         2048
+Matrix size:       6144x4096
+Iteration limit:   100
+Elapsed Time:      373 ms

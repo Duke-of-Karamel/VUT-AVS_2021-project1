@@ -1,0 +1,111 @@
+/**
+ * @file BatchMandelCalculator.cc
+ * @author Lukáš Wagner <xwagne10@stud.fit.vutbr.cz>
+ * @brief Implementation of Mandelbrot calculator that uses SIMD paralelization over small batches
+ * @date DATE
+ */
+
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+
+#include <stdlib.h>
+#include <stdexcept>
+
+#include "BatchMandelCalculator.h"
+
+BatchMandelCalculator::BatchMandelCalculator (unsigned matrixBaseSize, unsigned limit) :
+	BaseMandelCalculator(matrixBaseSize, limit, "BatchMandelCalculator")
+{
+	// @TODO allocate & prefill memory
+	data = (int *)(malloc(height * width * sizeof(int)));
+	template_row = (float*)(malloc(width * sizeof(float)));
+	template_col = (float*)(malloc(height * sizeof(float)));
+	temp_real = (float*)(calloc(height*width , sizeof(float)));
+	temp_imag = (float*)(calloc(height*width , sizeof(float)));
+
+
+	for (int i = 0; i < height; i++)
+	{
+		template_col[i] = y_start + i * dy; // current imaginary value
+
+		for (int j = 0; j < width; j++){
+			data[i*width+j]=-1;
+		}
+	}
+
+	for (int j = 0; j < width; j++)
+	{
+		template_row[j] = x_start + j * dx; // current real value
+	}
+}
+
+BatchMandelCalculator::~BatchMandelCalculator() {
+	// @TODO cleanup the memory
+	free(data);
+	data = NULL;
+	free(temp_real);
+	temp_real = NULL;
+}
+
+
+int * BatchMandelCalculator::calculateMandelbrot () {
+	int* pdata = data;
+	float* preal = temp_real;
+	float* pimag = temp_imag;
+
+	// for every collumn
+	for (int j = 0; j < width; j++)
+	{
+		// iterate whole rows
+		for (int n_it = 0; n_it<limit; n_it++)
+		{
+
+			// stop iterating if every cell in collumn is done
+			int cancel = 0;
+			#pragma omp simd
+			for (int i = 0; i < height; i++){
+				cancel |= pdata[i*width+j];
+			}
+			if (cancel > 0)
+				{
+					// std::cout<<"REEEEEEEEEEEEEEEEEEEEEEE\n";
+				break;
+				}
+
+
+			// for every cell from this collumn in this iteration
+			#pragma omp simd
+			for (int i = 0; i < height; i++)
+			{
+				// load previous iteration of this cell
+				float zReal = preal[i];
+				float zImag = pimag[i];
+
+				//////////////////////
+
+				//squares
+				float r2 = zReal * zReal;
+				float i2 = zImag * zImag;
+
+				// (A + Bi)^2 = A^2 + 2ABi - B^2
+				pimag[i] = 2.0f * zReal * zImag + template_col[i];
+				preal[i] = r2 - i2 + template_row[j];
+
+				//////////////////////
+
+				// result decision, hopefully branchless via masking
+				int curr = pdata[i*width+j];
+				int temp = (r2 + i2 > 4.0f)? n_it : curr;
+				int temp2 = (n_it == limit-1)? limit : temp;
+				pdata[i*width+j] = (curr < 0)? temp2 : curr;
+			}
+		}
+		// advance to next row
+		preal += height;
+		pimag += height;
+		// pdata += height;
+	}
+	return data;
+}
